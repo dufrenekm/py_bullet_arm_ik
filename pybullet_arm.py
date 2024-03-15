@@ -2,10 +2,10 @@ import pybullet as p
 import pybullet_data
 class PyBulletIK:
     def __init__(self) -> None:
-        physicsClient = p.connect(p.DIRECT)#or p.DIRECT for non-graphical version
+        physicsClient = p.connect(p.DIRECT)#or p.DIRECT for non-graphical version or GUI
         p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
         planeId = p.loadURDF("plane.urdf")
-        p.setAdditionalSearchPath('/home/kyle/ik_arm_test/intro_2_arm_relaxed_ik_core/configs/urdfs') #optionally
+        p.setAdditionalSearchPath('/home/pi/ArmPi/Functions/py_bullet_arm_ik') #optionally
         p.setGravity(0,0,-10)
         startPos = [0,0,0]
         startOrientation = p.getQuaternionFromEuler([0,0,0])
@@ -15,6 +15,7 @@ class PyBulletIK:
         self.ee = 5
     
     def move_arm(self, target = [0,0,0,0,0]):
+        """Reloads arm in final position - no collisions calculated"""
         if not len(target) == 5:
             print("ERROR: Incorrect number of joints.")
             exit()
