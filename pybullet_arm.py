@@ -5,16 +5,14 @@ from time import sleep
 import math
 class PyBulletIK:
     def __init__(self) -> None:
-        physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version or GUI
+        physicsClient = p.connect(p.DIRECT)#or p.DIRECT for non-graphical version or GUI
         p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
         planeId = p.loadURDF("plane.urdf")
         p.setAdditionalSearchPath('/home/roosh/Intro2ArmPi/Functions/py_bullet_arm_ik') #optionally
         p.setGravity(0,0,-10)
-        startPos = [0,0,0]
+        startPos = [0,0,-0.08]
         startOrientation = p.getQuaternionFromEuler([0,0,0])
-        # print(p.getQuaternionFromEuler([0,0,0]))
-        self.pi_arm_ID = p.loadURDF("pi_arm.urdf",startPos, startOrientation)
-        p.resetBasePositionAndOrientation(self.pi_arm_ID, [0, 0, -.1], [0, 0, 0, 1])
+        self.pi_arm_ID = p.loadURDF("pi_arm.urdf", startPos, startOrientation)
         self.ee = 5
         self.numJoints = 5
         self.threshold = 0.01
@@ -35,15 +33,14 @@ class PyBulletIK:
         else:
             xyz_target = target[:3]
             target = p.calculateInverseKinematics(self.pi_arm_ID, self.ee, target[:3], target[-4:], maxNumIterations=1000, residualThreshold=0.001)
-        for i in range(5):
-            p.resetJointState(self.pi_arm_ID, i, target[i])
+        self.move_arm(target)
         ls = p.getLinkState(self.pi_arm_ID, self.ee)
         print(target)
         newPos = ls[4]
         newOr = ls[5]
         diff = [xyz_target[0] - newPos[0], xyz_target[1] - newPos[1], xyz_target[2] - newPos[2]]
         dist2 = (diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2])
-        print (f"threshold: {str(dist2)} at pose: {str(newPos)} {str(quat2euler(newOr))} from pose {xyz_target}")
+        print(f"threshold: {str(dist2)} at pose: {str(newPos)} {str(quat2euler(newOr))} from pose {xyz_target}")
         if dist2 > self.threshold:
             return False
         return target
@@ -53,8 +50,7 @@ class PyBulletIK:
         iter = 0
         dist2 = 1e30
         jointPoses = p.calculateInverseKinematics(self.pi_arm_ID, self.ee, xyz_target, orientation, maxNumIterations=1000, residualThreshold=0.01)
-        for i in range(5):
-            p.resetJointState(self.pi_arm_ID, i, jointPoses[i])
+        self.move_arm(jointPoses)
         ls = p.getLinkState(self.pi_arm_ID, self.ee)
         newPos = ls[4]
         newOr = ls[5]
@@ -70,7 +66,7 @@ class PyBulletIK:
             dist2 = (diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2])
             closeEnough = (dist2 < self.threshold)
             iter = iter + 1
-        print(ls)
+        print(jointPoses)
         print (f"threshold: {str(dist2)} at pose: {str(newPos)} {str(quat2euler(newOr))} from pose {xyz_target} {quat2euler(orientation)}")
         if self.threshold < dist2:
             return False
@@ -78,5 +74,4 @@ class PyBulletIK:
         
 if __name__ == '__main__':
     IK = PyBulletIK()
-    for i in range(100):
-        print(IK.compute_ik_pair([.2, 0, .1], euler2quat(0, math.radians(30), -3.14)))
+    IK.compute_ik_pair([.15, 0, .1], euler2quat(0, math.radians(30), 0))
